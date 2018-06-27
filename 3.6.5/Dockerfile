@@ -9,10 +9,10 @@ ENV HOME_SITE "/home/site/wwwroot"
 
 #Install venv
 RUN pip install --upgrade pip \
-	&& pip install virtualenv \
+    && pip install subprocess32 \
     && pip install gunicorn
 
-COPY entrypoint.sh /usr/local/bin
+COPY entrypoint.py /usr/local/bin
 
 RUN set -ex \
     && mkdir -p $HOME_SITE 
@@ -21,5 +21,4 @@ WORKDIR ${HOME_SITE}
 
 EXPOSE 8000
 
-RUN chmod u+x /usr/local/bin/entrypoint.sh
-ENTRYPOINT ["entrypoint.sh"]
+ENTRYPOINT ["python3","/usr/local/bin/entrypoint.py"]
