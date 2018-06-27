@@ -14,9 +14,6 @@ RUN pip install --upgrade pip \
 
 COPY entrypoint.py /usr/local/bin
 
-RUN set -ex \
-    && mkdir -p $HOME_SITE 
-
 WORKDIR ${HOME_SITE}
 
 EXPOSE 8000
