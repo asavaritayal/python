@@ -1,9 +1,10 @@
 import subprocess
+import glob
 import os
 
 HOME_SITE="/home/site/wwwroot"
 
-# Temporary patch. Remove when Kudu script is available.
+# Temp patch. Remove when Kudu script is available.
 os.environ["PYTHONPATH"] = HOME_SITE + "/antenv/lib/python3.6/site-packages"
 
 def subprocess_cmd(command):
@@ -15,19 +16,48 @@ def subprocess_cmd(command):
 def custom_check():
     return None
 
-## Django check : If manage.py is present in the project, find wsgi object and identify as Django. 
+## Django check: If 'wsgi.py' is provided, identify as Django. 
 def check_django():
+    wsgi_modules = glob.glob(HOME_SITE+'/**/wsgi.py', recursive=True)
+    if len(wsgi_modules)==0:
+        return None
+    else:
+        return wsgi_modules[0][1:-3].replace('/','.')
     return None
 
-## Flask check : If application.py is provided or only a single module is present, identify as Flask.
+## Flask check: If 'application.py' is provided or a .py module is present, identify as Flask.
 def check_flask():
-    if os.path.exists(HOME_SITE + "/application.py"):
-        return 'application:app'
-    else:
+    
+    py_modules = glob.glob(HOME_SITE+'/*.py')
+    if len(py_modules) == 0:
         return None
+    for module in py_modules: 
+        if module[-14:] == 'application.py':
+            return 'application:app'
 
-app_module = check_flask()
+    return py_modules[0][len(HOME_SITE)+1:-3].replace('/','.')+':app'
+
+def start_server():
+    
+    cmd = custom_check()
+    if cmd is not None: 
+        subprocess_cmd(
+                'GUNICORN_CMD_ARGS="--bind=0.0.0.0" ' + cmd
+               )
+        return
+
+    cmd = check_django()
+    if cmd is not None:
+        subprocess_cmd(
+                'GUNICORN_CMD_ARGS="--bind=0.0.0.0" gunicorn ' + cmd
+               )
+
+    cmd = check_flask()
+    if cmd is not None:
+        subprocess_cmd(
+                'GUNICORN_CMD_ARGS="--bind=0.0.0.0" gunicorn ' + cmd
+               )
 
 subprocess_cmd('python --version; pip --version;'
-                'GUNICORN_CMD_ARGS="--bind=0.0.0.0" gunicorn ' + app_module
                )
+start_server()
