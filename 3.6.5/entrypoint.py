@@ -59,5 +59,6 @@ def start_server():
                )
 
 subprocess_cmd('python --version; pip --version;'
+                'source antev/bin/activate'
                )
 start_server()
